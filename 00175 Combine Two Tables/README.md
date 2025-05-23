@@ -13,41 +13,38 @@
 
 ## 💡 **Problem Explanation**
 
-The problem asks us to combine data from two tables, `Person` and `Address`, based on the `personId`. Specifically, we want to retrieve the `firstName`, `lastName` from the `Person` table along with the `city` and `state` from the `Address` table. The catch is that not every person might have an address listed in the `Address` table, so we need to ensure we include all people, even those without address information.  If a `personId` in `Person` does not have corresponding `personId` in `Address`, display NULL.
+The problem asks you to combine information from two tables, `Person` and `Address`, based on their common field `personId`.  Specifically, you need to retrieve the `firstName`, `lastName` from the `Person` table, along with the `city` and `state` from the `Address` table. The catch is that not every person might have an address listed in the `Address` table.  In such cases, you should still display the person's name, but the address fields should be `NULL`.
 
 **Example:**
 
 **Person Table:**
 
 | personId | lastName | firstName |
-|----------|----------|-----------|
-| 1        | Wang     | Allen     |
-| 2        | Alice    | Bob       |
+|---|---|---|
+| 1 | Wang | Allen |
+| 2 | Alice | Bob |
 
 **Address Table:**
 
-| addressId | personId | city      | state     |
-|-----------|----------|-----------|-----------|
-| 1         | 2        | New York  | New York  |
-| 2         | 3        | Leetcode  | California|
+| addressId | personId | city | state |
+|---|---|---|---|
+| 1 | 2 | New York City | New York |
+| 2 | 3 | Leetcode | California |
 
 **Expected Output:**
 
-| firstName | lastName | city      | state     |
-|-----------|----------|-----------|-----------|
-| Allen     | Wang     | NULL      | NULL      |
-| Bob       | Alice    | New York  | New York  |
+| firstName | lastName | city | state |
+|---|---|---|---|
+| Allen | Wang | NULL | NULL |
+| Bob | Alice | New York City | New York |
 
 ---
 
 ## 📊 **Algorithm**
 
-*   Use a `LEFT JOIN` to include all rows from the `Person` table, regardless of whether there is a matching entry in the `Address` table.
-*   Specify the join condition as `p.personId = a.personId`, where `p` is an alias for the `Person` table and `a` is an alias for the `Address` table.
-*   Select the desired columns: `firstName`, `lastName` from `Person` and `city`, `state` from `Address`.
-*   If a person doesn't have an address, the `city` and `state` columns will be `NULL` in the result.
-
----
+*   Select the `firstName` and `lastName` columns from the `Person` table.
+*   Select the `city` and `state` columns from the `Address` table.
+*   Perform a `LEFT JOIN` between the `Person` and `Address` tables, using `personId` as the joining key.  A `LEFT JOIN` ensures that all rows from the `Person` table are included in the result, even if there isn't a matching row in the `Address` table. If there is no match in the Address table, the columns originating from Address will be `NULL`.
 
 ## 🔥 **Code Implementation**
 
@@ -57,48 +54,54 @@ SELECT p.firstName, p.lastName, a.city, a.state FROM Person p LEFT JOIN Address 
 ON p.personId = a.personId;
 ```
 
----
-
 ## 📊 **ASCII Representation**
 
-Since this problem involves tables and not grids or movements, an ASCII representation of the data relationship can be visualized as follows:
+Since this problem involves database tables, an ASCII representation helps visualize the join operation.
 
 ```
-Person Table           Address Table
-+----------+        +----------+
-| personId |------->| personId |
-+----------+        +----------+
-| firstName|        | city     |
-+----------+        +----------+
-| lastName |        | state    |
-+----------+        +----------+
+Person Table:
+
++----------+----------+-----------+
+| personId | lastName | firstName |
++----------+----------+-----------+
+|    1     |  Wang    |   Allen   |
+|    2     |  Alice   |    Bob    |
++----------+----------+-----------+
+
+Address Table:
+
++-----------+----------+---------------+------------+
+| addressId | personId |      city     |   state    |
++-----------+----------+---------------+------------+
+|    1      |    2     | New York City | New York   |
+|    2      |    3     |   Leetcode    | California |
++-----------+----------+---------------+------------+
+
+LEFT JOIN on Person.personId = Address.personId:
+
++-----------+----------+-----------+-----------+---------------+------------+
+| firstName | lastName | personId  | addressId |      city     |   state    |
++-----------+----------+-----------+-----------+---------------+------------+
+|   Allen   |   Wang   |     1     |    NULL   |      NULL     |    NULL    |
+|    Bob    |  Alice   |     2     |     1     | New York City | New York   |
++-----------+----------+-----------+-----------+---------------+------------+
 ```
 
----
+## 📊 **WORKING**
 
-## 📊 **WORKING
+Let's walk through how the query would process the sample input.
 
-Given the sample inputs, here's how the query works step-by-step:
+1.  **`FROM Person p LEFT JOIN Address a ON p.personId = a.personId`**: The database starts with the `Person` table and attempts to find matching rows in the `Address` table based on `personId`.
 
-1.  **Initial Tables:**  We start with the `Person` and `Address` tables as described in the Problem Explanation.
+2.  For the first row in `Person` (Allen Wang, `personId = 1`), there's no matching `personId` in the `Address` table.  Because it's a `LEFT JOIN`, the row from `Person` is still included, and the columns originating from `Address` (city and state) become `NULL`.
 
-2.  **LEFT JOIN:**  The `LEFT JOIN` ensures that every row from the `Person` table is included in the result.
+3.  For the second row in `Person` (Bob Alice, `personId = 2`), there's a match in the `Address` table (`addressId = 1`). The corresponding `city` and `state` are retrieved.
 
-3.  **Join Condition:** The `ON p.personId = a.personId` condition links the tables based on matching `personId` values.
-
-4.  **Result Generation:**
-
-    *   For `personId = 1` (Allen Wang), there is no matching entry in the `Address` table. Therefore, the `city` and `state` will be `NULL`.
-
-    *   For `personId = 2` (Bob Alice), there is a matching entry in the `Address` table. Therefore, the `city` and `state` will be 'New York' and 'New York' respectively.
-
-5.  **Final Output:** The query returns the combined data as specified in the problem description.
-
----
+4.  **`SELECT p.firstName, p.lastName, a.city, a.state`**: Finally, the query selects the requested columns, resulting in the final output table.
 
 ## 🚀 **Time & Space Complexity**
 
-*   **Time Complexity:** The time complexity is **O(N + M)**, where N is the number of rows in the `Person` table and M is the number of rows in the `Address` table. This is because, in the worst case, the database might need to scan both tables.  The performance heavily depends on indexing. If `personId` is indexed in both tables, the join operation can be significantly faster.
+*   **Time Complexity:** The time complexity of a `LEFT JOIN` operation in SQL largely depends on the indexing.  In the best case, with proper indexes on the `personId` columns of both tables, the complexity can be close to **O(N + M)**, where N is the number of rows in `Person` and M is the number of rows in `Address`.  Without indexes, it could degrade to **O(N * M)**.
 
-*   **Space Complexity:** The space complexity is **O(K)**, where K is the number of rows in the output.  In the worst-case scenario, where every person has an address, K would be equal to the number of people (N). The space is used to store the result set.
+*   **Space Complexity:** The space complexity is primarily determined by the size of the resulting table. In the worst case, where every row in `Person` has a matching row in `Address`, the space complexity would be **O(N)**, where N is the number of rows in the resulting combined table.
     
