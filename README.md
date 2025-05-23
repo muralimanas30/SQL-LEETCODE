@@ -94,4 +94,3 @@
 
 ---
 _This README was automatically generated using a script._ 😊
-"# SQL-LEETCODE" 
