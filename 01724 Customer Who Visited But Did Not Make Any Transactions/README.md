@@ -1,119 +1,165 @@
 # 01724 - Customer Who Visited But Did Not Make Any Transactions
     
 **Language:** Mysql  
-**Runtime:** 1421 ms (Beats 43.16% of users)  
+**Runtime:** 1421 ms (Beats 43.74% of users)  
 **Memory:** 0B (Beats 100.00% of users)  
 
 ## 📝 **LeetCode Problem**
-| 🔢 Problem Number | 📌 Title | 🔗 Link |
-|------------------|--------------------------|--------------------------|
-| 153 | Find Minimum in Rotated Sorted Array | [LeetCode Problem](https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/) |
+
+| 🔢 Problem Number | 📌 Title                                                          | 🔗 Link                                                                                                     |
+| ------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 1581               | Customer Who Visited but Did Not Make Any Transactions            | [LeetCode Problem](https://leetcode.com/problems/customer-who-visited-but-did-not-make-any-transactions/) |
 
 ---
 
 ## 💡 **Problem Explanation**
 
-Given a sorted array `nums` of unique elements that has been rotated at some unknown pivot index, find the minimum element in the rotated array. For example, the array `[4, 5, 6, 7, 0, 1, 2]` is a rotated version of `[0, 1, 2, 4, 5, 6, 7]`. The task is to find the smallest element in this rotated array efficiently.
+The problem requires identifying customers who visited the store but did not make any transactions. We are given two tables: `Visits` and `Transactions`.  The `Visits` table contains information about customer visits, and the `Transactions` table contains information about transactions made during those visits. We need to find the `customer_id` from the `Visits` table where there is no corresponding `visit_id` in the `Transactions` table. The result should list the `customer_id` and the number of visits without transactions.
 
-**Example:**
+**Sample Input:**
 
-Input: `nums = [3,4,5,1,2]`
-Output: `1`
+`Visits` table:
 
-Input: `nums = [4,5,6,7,0,1,2]`
-Output: `0`
+| visit_id | customer_id |
+| -------- | ----------- |
+| 1        | 23          |
+| 2        | 9           |
+| 4        | 30          |
+| 5        | 23          |
+| 6        | 9           |
+
+`Transactions` table:
+
+| id | visit_id | amount |
+| -- | -------- | ------ |
+| 1  | 5        | 300    |
+| 2  | 2        | 200    |
+
+**Expected Output:**
+
+| customer_id | count_no_trans |
+| ----------- | -------------- |
+| 30          | 1              |
+| 23          | 1              |
+
+**Explanation:**
+
+- Customer 23 visited twice (visit\_id 1 and 5), but only made one transaction (visit\_id 5). Thus, one visit without a transaction.
+- Customer 9 visited twice (visit\_id 2 and 6), but only made one transaction (visit\_id 2). Thus, one visit without a transaction.
+- Customer 30 visited once (visit\_id 4) and made no transactions. Thus, one visit without a transaction.
 
 ---
 
 ## 📊 **Algorithm**
 
-*   Initialize two pointers, `left` and `right`, to the start and end of the array, respectively.
-*   Use binary search to find the index of the minimum element.
-*   While `left` is less than `right`, calculate the middle index `mid`.
-*   If `nums[mid]` is greater than `nums[right]`, the minimum element is in the right half of the array.  So, update `left = mid + 1`.
-*   Otherwise, the minimum element is in the left half or is `nums[mid]` itself. Update `right = mid`.
-*   When the loop finishes (`left == right`), `nums[left]` will be the minimum element.
-*   Return `nums[left]`.
+*   Perform a left join between the `Visits` and `Transactions` tables on the `visit_id` column.
+*   Filter out the rows where `transaction_id` is NULL, indicating that the visit did not result in a transaction.
+*   Group the results by `customer_id` to count the number of visits without transactions for each customer.
+*   Count the number of visits without transactions using `COUNT()` function.
+*   Select the `customer_id` and the calculated count as `count_no_trans`.
+
+---
 
 ## 🔥 **Code Implementation**
 
-```python
-class Solution:
-    def findMin(self, nums: List[int]) -> int:
-        left, right = 0, len(nums) - 1
-
-        while left < right:
-            mid = (left + right) // 2
-
-            if nums[mid] > nums[right]:
-                left = mid + 1
-            else:
-                right = mid
-
-        return nums[left]
+```mysql
+# Write your MySQL query statement below
+SELECT v.customer_id
+,COUNT(IFNULL(T.transaction_id,0)) AS count_no_trans
+FROM VISITS V
+LEFT JOIN TRANSACTIONS T
+ON V.VISIT_ID = T.VISIT_ID
+WHERE T.transaction_id IS NULL
+GROUP BY v.CUSTOMER_ID
 ```
+
+---
 
 ## 📊 **ASCII Representation**
 
-The problem involves a rotated sorted array, visualized linearly:
+**Visits Table:**
 
 ```
-Array: [4, 5, 6, 7, 0, 1, 2]
++------------+-------------+
+| visit_id   | customer_id |
++------------+-------------+
+| 1          | 23          |
+| 2          | 9           |
+| 4          | 30          |
+| 5          | 23          |
+| 6          | 9           |
++------------+-------------+
 ```
 
-During binary search, we adjust the `left` and `right` pointers:
+**Transactions Table:**
 
 ```
-Initial:
-L               R
-4  5  6  7  0  1  2
-
-Iteration 1: mid = (0+6)//2 = 3
-L        M        R
-4  5  6  7  0  1  2
-nums[mid] > nums[R] => left = mid + 1
-
-Iteration 2:
-           L    R
-4  5  6  7  0  1  2
-nums[mid] < nums[R] => right = mid
-
-... and so on until L == R
++------------+------------+--------+
+| id         | visit_id   | amount |
++------------+------------+--------+
+| 1          | 5          | 300    |
+| 2          | 2          | 200    |
++------------+------------+--------+
 ```
+
+**Combined Table (After LEFT JOIN):**
+
+```
++------------+-------------+------------+--------+
+| visit_id   | customer_id | id         | amount |
++------------+-------------+------------+--------+
+| 1          | 23          | NULL       | NULL   |
+| 2          | 9           | 2          | 200    |
+| 4          | 30          | NULL       | NULL   |
+| 5          | 23          | 1          | 300    |
+| 6          | 9           | NULL       | NULL   |
++------------+-------------+------------+--------+
+```
+
+---
 
 ## 📊 **WORKING**
 
-Consider `nums = [4, 5, 6, 7, 0, 1, 2]`
+Let's trace the execution with the given sample data:
 
-1.  Initialize `left = 0`, `right = 6`.
+1.  **LEFT JOIN:** The `VISITS` table is left-joined with the `TRANSACTIONS` table using `VISIT_ID`. If a `VISIT_ID` from `VISITS` does not exist in `TRANSACTIONS`, the columns from `TRANSACTIONS` will be `NULL`.
 
-2.  **Iteration 1:**
+2.  **WHERE Clause:** `WHERE T.transaction_id IS NULL` filters the joined table to only include rows where there was no transaction for a visit.
 
-    *   `mid = (0 + 6) // 2 = 3`
-    *   `nums[mid] = nums[3] = 7`, `nums[right] = nums[6] = 2`
-    *   Since `nums[mid] > nums[right]`, update `left = mid + 1 = 4`
+    Result after WHERE clause:
 
-3.  **Iteration 2:**
+    ```
+    +------------+-------------+------------+--------+
+    | visit_id   | customer_id | id         | amount |
+    +------------+-------------+------------+--------+
+    | 1          | 23          | NULL       | NULL   |
+    | 4          | 30          | NULL       | NULL   |
+    | 6          | 9           | NULL       | NULL   |
+    +------------+-------------+------------+--------+
+    ```
 
-    *   `left = 4`, `right = 6`
-    *   `mid = (4 + 6) // 2 = 5`
-    *   `nums[mid] = nums[5] = 1`, `nums[right] = nums[6] = 2`
-    *   Since `nums[mid] < nums[right]`, update `right = mid = 5`
+3.  **GROUP BY:** The results are grouped by `customer_id`.
 
-4.  **Iteration 3:**
+4.  **COUNT and SELECT:** For each `customer_id`, `COUNT(IFNULL(T.transaction_id,0))` counts the number of visits without transactions. `IFNULL` function changes the `NULL` values to `0`, so the count aggregate function can function properly.
 
-    *   `left = 4`, `right = 5`
-    *   `mid = (4 + 5) // 2 = 4`
-    *   `nums[mid] = nums[4] = 0`, `nums[right] = nums[5] = 1`
-    *   Since `nums[mid] < nums[right]`, update `right = mid = 4`
+    | customer\_id | count(IFNULL(T.transaction\_id,0)) |
+    | :----------- | :---------------------------------- |
+    | 9            | 1                                   |
+    | 23           | 1                                   |
+    | 30           | 1                                   |
 
-5.  Now, `left = 4` and `right = 4`, so the loop terminates.
+5.  **Final Output:**
 
-6.  The minimum element is `nums[left] = nums[4] = 0`.
+    | customer\_id | count\_no\_trans |
+    | :----------- | :--------------- |
+    | 9            | 1                |
+    | 23           | 1                |
+    | 30           | 1                |
+
+---
 
 ## 🚀 **Time & Space Complexity**
 
-*   **Time Complexity:** **O(log n)** because we are using binary search to reduce the search space by half in each iteration.
-
-*   **Space Complexity:** **O(1)** as we are using only constant extra space.
+*   **Time Complexity:** The time complexity is **O(N + M)**, where N is the number of rows in the `Visits` table and M is the number of rows in the `Transactions` table. This is due to the left join operation, which can take O(N + M) time in the worst case. The grouping operation takes O(N) time.
+*   **Space Complexity:** The space complexity is **O(N)**, where N is the number of rows in the `Visits` table.  This is due to the space required to store the joined table and the intermediate results of the grouping operation.
     
