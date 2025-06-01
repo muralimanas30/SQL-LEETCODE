@@ -1,7 +1,7 @@
 # 00181 - Employees Earning More Than Their Managers
     
 **Language:** Mysql  
-**Runtime:** 463 ms (Beats 18.62% of users)  
+**Runtime:** 896 ms (Beats 11.84% of users)  
 **Memory:** 0B (Beats 100.00% of users)  
 
 ## 📝 **LeetCode Problem**
@@ -13,18 +13,18 @@
 
 ## 💡 **Problem Explanation**
 
-The problem requires us to find employees who earn more than their managers.  We are given a table named `Employee` with columns like `Id`, `Name`, `Salary`, and `ManagerId`. We need to write a SQL query that returns the names of employees who have a higher salary than their managers.
+The problem requires us to find employees who earn more than their managers. We are given an `Employee` table with columns like `id`, `name`, `salary`, and `managerId`. The `managerId` column refers to the `id` of the employee's manager. We need to write a SQL query that returns the names of all employees who earn more than their managers.
 
-For Example:
+**Example:**
 
 **Employee Table:**
 
-| Id  | Name   | Salary | ManagerId |
-|-----|--------|--------|-----------|
-| 1   | Joe    | 70000  | 3         |
-| 2   | Henry  | 80000  | 4         |
-| 3   | Sam    | 60000  | NULL      |
-| 4   | Max    | 90000  | NULL      |
+| id  | name  | salary | managerId |
+|-----|-------|--------|-----------|
+| 1   | Joe   | 70000  | 3         |
+| 2   | Henry | 80000  | 4         |
+| 3   | Sam   | 60000  | NULL      |
+| 4   | Max   | 90000  | NULL      |
 
 **Expected Output:**
 
@@ -32,24 +32,34 @@ For Example:
 |----------|
 | Joe      |
 
-Joe earns 70000, and his manager (Sam, Id=3) earns 60000.  Thus, Joe satisfies the condition.
+In this example, Joe earns 70000, and his manager (Sam) earns 60000. So, Joe's name should be in the output.
 
 ## 📊 **Algorithm**
-*   Join the `Employee` table with itself using the `ManagerId` to link employees to their managers.
-*   Filter the results to include only employees whose salary is greater than their manager's salary.
-*   Select the names of these employees.
+
+**Method 2 Algorithm (using subquery):**
+
+*   Select the name of the employee (`E.name`) as `Employee` from the `Employee` table (aliased as `E`).
+*   Filter the results to include only employees who have a manager (`E.managerId is not null`).
+*   Further filter the results to include only employees whose salary is greater than their manager's salary.  A subquery is used to get the manager's salary (`SELECT Salary FROM Employee E2 WHERE E2.id = E.managerID`).
 
 ## 🔥 **Code Implementation**
 
 ```mysql
-# Write your MySQL query statement below
-select e1.name as Employee from employee e1
-join employee e2 on e1.managerId = e2.id
-where e1.salary>e2.salary;
+# METHOD 2
+-- Algorithm:
+-- 1. Select the name of the employee as 'Employee'.
+-- 2. Filter for employees who have a manager (managerId is not null).
+-- 3. Ensure the employee's salary is greater than their manager's salary (using a subquery).
+
+select E.name as Employee from Employee as E
+where E.managerId is not null
+and E.Salary > (
+    Select Salary from Employee E2
+    where E2.id = E.managerID
+)
 ```
 
 ## 📊 **ASCII Representation**
-This problem doesn't directly involve grids or trees, so an ASCII representation isn't applicable. However, we can visualize the database relationship.
 
 ```
 Employee Table:
@@ -64,59 +74,39 @@ Employee Table:
 +-------------+---------+
 ```
 
-Database Relationship:
-
-```
-  Employee (e1)        Employee (e2 - Manager)
-+---------+           +---------+
-| id      |---------->| id      |
-| name    |           | name    |
-| salary  |           | salary  |
-| managerId|           |         |
-+---------+           +---------+
-  ^
-  |
-  +--------------------(ManagerId = id)
-```
-
 ## 📊 **WORKING**
 
-Let's trace the query using the sample input:
+Let's trace the execution of the SQL query using the example table provided earlier:
 
 **Employee Table:**
 
-| Id  | Name   | Salary | ManagerId |
-|-----|--------|--------|-----------|
-| 1   | Joe    | 70000  | 3         |
-| 2   | Henry  | 80000  | 4         |
-| 3   | Sam    | 60000  | NULL      |
-| 4   | Max    | 90000  | NULL      |
+| id  | name  | salary | managerId |
+|-----|-------|--------|-----------|
+| 1   | Joe   | 70000  | 3         |
+| 2   | Henry | 80000  | 4         |
+| 3   | Sam   | 60000  | NULL      |
+| 4   | Max   | 90000  | NULL      |
 
-1.  **Join:**
-    We join the table with itself. `e1` represents the employee, and `e2` represents the manager.
+1.  **Outer Query:**
+    *   The outer query starts by selecting `E.name` as `Employee` from the `Employee` table (aliased as `E`).
 
-    | e1.Id | e1.Name | e1.Salary | e1.ManagerId | e2.Id | e2.Name | e2.Salary |
-    |-------|---------|-----------|--------------|-------|---------|-----------|
-    | 1     | Joe     | 70000     | 3            | 3     | Sam     | 60000     |
-    | 2     | Henry   | 80000     | 4            | 4     | Max     | 90000     |
+2.  **`WHERE` Clause Evaluation:**
+    *   `E.managerId is not null`: This filters out employees who do not have a manager (Sam and Max are excluded in the first step).  So, we are left with Joe and Henry.
+    *   `E.Salary > (Subquery)`: This is where the subquery comes into play.
+        *   **For Joe (E.id = 1):**
+            *   `E.salary = 70000`
+            *   The subquery `SELECT Salary FROM Employee E2 WHERE E2.id = E.managerID` becomes `SELECT Salary FROM Employee E2 WHERE E2.id = 3`.  This returns 60000 (Sam's salary).
+            *   The condition becomes `70000 > 60000`, which is true.  So, Joe is included in the result.
+        *   **For Henry (E.id = 2):**
+            *   `E.salary = 80000`
+            *   The subquery `SELECT Salary FROM Employee E2 WHERE E2.id = E.managerID` becomes `SELECT Salary FROM Employee E2 WHERE E2.id = 4`.  This returns 90000 (Max's salary).
+            *   The condition becomes `80000 > 90000`, which is false.  So, Henry is excluded.
 
-2.  **Where Clause:**
-    We filter where `e1.salary > e2.salary`.
-
-    *   For Joe: `70000 > 60000` is true.
-    *   For Henry: `80000 > 90000` is false.
-
-3.  **Select:**
-    We select `e1.name` (the employee's name) for the rows that satisfy the `where` condition.
-
-Result:
-
-| Employee |
-|----------|
-| Joe      |
+3.  **Final Result:**
+    *   The query returns only Joe as the `Employee` because he is the only one who satisfies all the conditions.
 
 ## 🚀 **Time & Space Complexity**
 
-*   **Time Complexity:**  The time complexity is **O(N)**, where N is the number of rows in the `Employee` table, due to the join operation and the filtering.  In the worst case, we might have to compare every employee with their manager.
-*   **Space Complexity:** The space complexity is **O(N)** in the worst case, where N is the number of rows in the `Employee` table. This is because, in the worst-case scenario, the joined table could contain a row for each employee.
+*   **Time Complexity:** The time complexity is **O(N^2)** in the worst-case scenario, where N is the number of employees. This is because for each employee, a subquery is executed to find the manager's salary. However, with optimizations in the database system, it can perform close to O(N).
+*   **Space Complexity:** The space complexity is **O(1)** because the query uses a constant amount of extra space, regardless of the input size.
     
