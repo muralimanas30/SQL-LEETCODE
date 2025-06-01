@@ -13,44 +13,57 @@
 
 ## 💡 **Problem Explanation**
 
-The problem requires us to find employees who earn more than their managers. We are given an `Employee` table with columns like `id`, `name`, `salary`, and `managerId`. The `managerId` column refers to the `id` of the employee's manager. We need to write a SQL query that returns the names of all employees who earn more than their managers.
+The problem requires you to find the employees who earn more than their managers. You are given an `Employee` table with columns: `Id` (employee ID), `name` (employee name), `salary` (employee salary), and `managerId` (ID of the employee's manager). The goal is to return a table with a single column, `Employee`, containing the names of all employees who earn more than their managers.
 
-**Example:**
+**Sample Input:**
 
-**Employee Table:**
+```
+Employee table:
++----+-------+--------+-----------+
+| Id | Name  | Salary | ManagerId |
++----+-------+--------+-----------+
+| 1  | Joe   | 70000  | 3         |
+| 2  | Henry | 80000  | 4         |
+| 3  | Sam   | 60000  | NULL      |
+| 4  | Max   | 90000  | NULL      |
++----+-------+--------+-----------+
+```
 
-| id  | name  | salary | managerId |
-|-----|-------|--------|-----------|
-| 1   | Joe   | 70000  | 3         |
-| 2   | Henry | 80000  | 4         |
-| 3   | Sam   | 60000  | NULL      |
-| 4   | Max   | 90000  | NULL      |
+**Sample Output:**
 
-**Expected Output:**
-
+```
++----------+
 | Employee |
-|----------|
++----------+
 | Joe      |
++----------+
+```
 
-In this example, Joe earns 70000, and his manager (Sam) earns 60000. So, Joe's name should be in the output.
+**Explanation:**
 
-## 📊 **Algorithm**
+- Joe (ID 1) has a salary of 70000 and reports to Manager with ID 3 (Sam). Sam's salary is 60000. Since Joe's salary (70000) is greater than Sam's salary (60000), Joe should be included in the output.
+- Henry (ID 2) has a salary of 80000 and reports to Manager with ID 4 (Max). Max's salary is 90000. Since Henry's salary (80000) is not greater than Max's salary (90000), Henry should not be included in the output.
 
-**Method 2 Algorithm (using subquery):**
+---
 
-*   Select the name of the employee (`E.name`) as `Employee` from the `Employee` table (aliased as `E`).
-*   Filter the results to include only employees who have a manager (`E.managerId is not null`).
-*   Further filter the results to include only employees whose salary is greater than their manager's salary.  A subquery is used to get the manager's salary (`SELECT Salary FROM Employee E2 WHERE E2.id = E.managerID`).
+## 📌 **Algorithm**
+
+1.  Select the name of the employee.
+2.  Filter the employees who have a manager (managerId is not NULL).
+3.  Compare the salary of each employee with the salary of their manager.
+4.  If the employee's salary is greater than the manager's salary, include the employee's name in the result.
+
+---
 
 ## 🔥 **Code Implementation**
 
 ```mysql
-# METHOD 2
--- Algorithm:
--- 1. Select the name of the employee as 'Employee'.
--- 2. Filter for employees who have a manager (managerId is not null).
--- 3. Ensure the employee's salary is greater than their manager's salary (using a subquery).
+# METHDOD 1
+-- select e1.name as Employee from employee e1
+-- join employee e2 on e1.managerId = e2.id
+-- where e1.salary>e2.salary;
 
+#METHOD 2
 select E.name as Employee from Employee as E
 where E.managerId is not null
 and E.Salary > (
@@ -59,54 +72,75 @@ and E.Salary > (
 )
 ```
 
+**Method 2: Subquery Approach**
+
+This method uses a subquery to fetch the manager's salary for each employee.
+
+---
+
 ## 📊 **ASCII Representation**
 
 ```
 Employee Table:
 
-+-------------+---------+
-| Column Name | Type    |
-+-------------+---------+
-| id          | int     |
-| name        | varchar |
-| salary      | int     |
-| managerId   | int     |
-+-------------+---------+
++----+-------+--------+-----------+
+| Id | Name  | Salary | ManagerId |
++----+-------+--------+-----------+
+| 1  | Joe   | 70000  | 3         |
+| 2  | Henry | 80000  | 4         |
+| 3  | Sam   | 60000  | NULL      |
+| 4  | Max   | 90000  | NULL      |
++----+-------+--------+-----------+
+
+Employee (Id)  ---- Reports to ---- Manager (Id)
+  1 (Joe)      ------------------> 3 (Sam)
+  2 (Henry)    ------------------> 4 (Max)
 ```
 
-## 📊 **WORKING**
+---
 
-Let's trace the execution of the SQL query using the example table provided earlier:
+## 🔄 **Working / Execution Flow**
 
-**Employee Table:**
+Let's trace the second query's execution with the sample input.
 
-| id  | name  | salary | managerId |
-|-----|-------|--------|-----------|
-| 1   | Joe   | 70000  | 3         |
-| 2   | Henry | 80000  | 4         |
-| 3   | Sam   | 60000  | NULL      |
-| 4   | Max   | 90000  | NULL      |
+```sql
+select E.name as Employee from Employee as E
+where E.managerId is not null
+and E.Salary > (
+    Select Salary from Employee E2
+    where E2.id = E.managerID
+)
+```
 
-1.  **Outer Query:**
-    *   The outer query starts by selecting `E.name` as `Employee` from the `Employee` table (aliased as `E`).
+1.  **First Iteration (E.Id = 1, E.Name = Joe, E.Salary = 70000, E.ManagerId = 3):**
+    *   `E.managerId is not null` evaluates to `3 is not null`, which is TRUE.
+    *   Subquery: `Select Salary from Employee E2 where E2.id = E.managerID` becomes `Select Salary from Employee E2 where E2.id = 3`.
+    *   The subquery returns `60000` (Sam's salary).
+    *   `E.Salary > (Subquery Result)` becomes `70000 > 60000`, which is TRUE.
+    *   Since both conditions are TRUE, 'Joe' is selected.
 
-2.  **`WHERE` Clause Evaluation:**
-    *   `E.managerId is not null`: This filters out employees who do not have a manager (Sam and Max are excluded in the first step).  So, we are left with Joe and Henry.
-    *   `E.Salary > (Subquery)`: This is where the subquery comes into play.
-        *   **For Joe (E.id = 1):**
-            *   `E.salary = 70000`
-            *   The subquery `SELECT Salary FROM Employee E2 WHERE E2.id = E.managerID` becomes `SELECT Salary FROM Employee E2 WHERE E2.id = 3`.  This returns 60000 (Sam's salary).
-            *   The condition becomes `70000 > 60000`, which is true.  So, Joe is included in the result.
-        *   **For Henry (E.id = 2):**
-            *   `E.salary = 80000`
-            *   The subquery `SELECT Salary FROM Employee E2 WHERE E2.id = E.managerID` becomes `SELECT Salary FROM Employee E2 WHERE E2.id = 4`.  This returns 90000 (Max's salary).
-            *   The condition becomes `80000 > 90000`, which is false.  So, Henry is excluded.
+2.  **Second Iteration (E.Id = 2, E.Name = Henry, E.Salary = 80000, E.ManagerId = 4):**
+    *   `E.managerId is not null` evaluates to `4 is not null`, which is TRUE.
+    *   Subquery: `Select Salary from Employee E2 where E2.id = E.managerID` becomes `Select Salary from Employee E2 where E2.id = 4`.
+    *   The subquery returns `90000` (Max's salary).
+    *   `E.Salary > (Subquery Result)` becomes `80000 > 90000`, which is FALSE.
+    *   Since the salary condition is FALSE, 'Henry' is not selected.
 
-3.  **Final Result:**
-    *   The query returns only Joe as the `Employee` because he is the only one who satisfies all the conditions.
+3.  **Third Iteration (E.Id = 3, E.Name = Sam, E.Salary = 60000, E.ManagerId = NULL):**
+    *   `E.managerId is not null` evaluates to `NULL is not null`, which is FALSE.
+    *   Since the first condition is FALSE, this row is skipped.
+
+4.  **Fourth Iteration (E.Id = 4, E.Name = Max, E.Salary = 90000, E.ManagerId = NULL):**
+    *   `E.managerId is not null` evaluates to `NULL is not null`, which is FALSE.
+    *   Since the first condition is FALSE, this row is skipped.
+
+Therefore, the final result will only contain 'Joe'.
+
+---
 
 ## 🚀 **Time & Space Complexity**
 
-*   **Time Complexity:** The time complexity is **O(N^2)** in the worst-case scenario, where N is the number of employees. This is because for each employee, a subquery is executed to find the manager's salary. However, with optimizations in the database system, it can perform close to O(N).
-*   **Space Complexity:** The space complexity is **O(1)** because the query uses a constant amount of extra space, regardless of the input size.
+*   **Time Complexity:** **O(n<sup>2</sup>)** -  The subquery is executed for each row, resulting in a nested loop behavior in the worst case.
+
+*   **Space Complexity:** **O(1)** - The query uses a constant amount of extra space.
     
