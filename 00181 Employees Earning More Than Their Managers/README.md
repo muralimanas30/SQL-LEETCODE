@@ -13,47 +13,40 @@
 
 ## 💡 **Problem Explanation**
 
-The problem requires you to find the employees who earn more than their managers. You are given an `Employee` table with columns: `Id` (employee ID), `name` (employee name), `salary` (employee salary), and `managerId` (ID of the employee's manager). The goal is to return a table with a single column, `Employee`, containing the names of all employees who earn more than their managers.
+This problem requires you to identify employees who earn more than their managers. You're given an `Employee` table with information about each employee, including their name, salary, and manager ID.  Your task is to write a SQL query that returns a table containing the names of employees who have a higher salary than their manager.
 
 **Sample Input:**
 
 ```
-Employee table:
-+----+-------+--------+-----------+
-| Id | Name  | Salary | ManagerId |
-+----+-------+--------+-----------+
+Employee Table:
+
+| id | name  | salary | managerId |
+|----|-------|--------|-----------|
 | 1  | Joe   | 70000  | 3         |
 | 2  | Henry | 80000  | 4         |
 | 3  | Sam   | 60000  | NULL      |
 | 4  | Max   | 90000  | NULL      |
-+----+-------+--------+-----------+
 ```
 
-**Sample Output:**
+**Expected Output:**
 
 ```
-+----------+
 | Employee |
-+----------+
+|----------|
 | Joe      |
-+----------+
+| Henry    |
 ```
 
-**Explanation:**
-
-- Joe (ID 1) has a salary of 70000 and reports to Manager with ID 3 (Sam). Sam's salary is 60000. Since Joe's salary (70000) is greater than Sam's salary (60000), Joe should be included in the output.
-- Henry (ID 2) has a salary of 80000 and reports to Manager with ID 4 (Max). Max's salary is 90000. Since Henry's salary (80000) is not greater than Max's salary (90000), Henry should not be included in the output.
+Joe earns 70000 and his manager (Sam, ID 3) earns 60000. Henry earns 80000 and his manager (Max, ID 4) earns 90000.
 
 ---
 
-## 📌 **Algorithm**
+## 📊 **Algorithm**
 
-1.  Select the name of the employee.
-2.  Filter the employees who have a manager (managerId is not NULL).
-3.  Compare the salary of each employee with the salary of their manager.
-4.  If the employee's salary is greater than the manager's salary, include the employee's name in the result.
-
----
+*   Select the `name` of the employees as `Employee`.
+*   Filter employees based on two conditions:
+    *   The employee's `managerId` must not be `NULL` (meaning they have a manager).
+    *   The employee's `salary` must be greater than their manager's `salary`. This requires a subquery to get the manager's salary based on the `managerId`.
 
 ## 🔥 **Code Implementation**
 
@@ -72,75 +65,96 @@ and E.Salary > (
 )
 ```
 
-**Method 2: Subquery Approach**
-
-This method uses a subquery to fetch the manager's salary for each employee.
-
----
-
 ## 📊 **ASCII Representation**
 
 ```
 Employee Table:
 
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| id          | int     |
+| name        | varchar |
+| salary      | int     |
+| managerId   | int     |
++-------------+---------+
+```
+
+```
+RELATION:
+
+Employee {
+  id: INT,
+  name: VARCHAR,
+  salary: INT,
+  managerId: INT,
+  FOREIGN KEY (managerId) REFERENCES Employee(id)
+}
+```
+
+## 📊 **WORKING**
+
+Let's consider the provided sample input and trace the execution of the SQL query:
+
+**Employee Table:**
+
+```
 +----+-------+--------+-----------+
-| Id | Name  | Salary | ManagerId |
+| id | name  | salary | managerId |
 +----+-------+--------+-----------+
 | 1  | Joe   | 70000  | 3         |
 | 2  | Henry | 80000  | 4         |
 | 3  | Sam   | 60000  | NULL      |
 | 4  | Max   | 90000  | NULL      |
 +----+-------+--------+-----------+
-
-Employee (Id)  ---- Reports to ---- Manager (Id)
-  1 (Joe)      ------------------> 3 (Sam)
-  2 (Henry)    ------------------> 4 (Max)
 ```
 
----
+**Step-by-step execution:**
 
-## 🔄 **Working / Execution Flow**
+1.  **Outer Query:**  `select E.name as Employee from Employee as E where E.managerId is not null and E.Salary > (...)`
 
-Let's trace the second query's execution with the sample input.
+    *   The outer query iterates through each row in the `Employee` table (aliased as `E`).
+    *   The `where` clause filters the rows based on two conditions:
+        *   `E.managerId is not null`: This ensures that we only consider employees who have a manager.
+        *   `E.Salary > (subquery)`: This compares the employee's salary with the salary returned by the subquery (which is the manager's salary).
 
-```sql
-select E.name as Employee from Employee as E
-where E.managerId is not null
-and E.Salary > (
-    Select Salary from Employee E2
-    where E2.id = E.managerID
-)
-```
+2.  **Subquery:** `Select Salary from Employee E2 where E2.id = E.managerID`
 
-1.  **First Iteration (E.Id = 1, E.Name = Joe, E.Salary = 70000, E.ManagerId = 3):**
-    *   `E.managerId is not null` evaluates to `3 is not null`, which is TRUE.
-    *   Subquery: `Select Salary from Employee E2 where E2.id = E.managerID` becomes `Select Salary from Employee E2 where E2.id = 3`.
-    *   The subquery returns `60000` (Sam's salary).
-    *   `E.Salary > (Subquery Result)` becomes `70000 > 60000`, which is TRUE.
-    *   Since both conditions are TRUE, 'Joe' is selected.
+    *   For each employee in the outer query, the subquery is executed to find the salary of their manager.
+    *   The subquery looks up the `Employee` table (aliased as `E2`) and finds the salary where the `id` matches the `managerId` of the employee in the outer query.
 
-2.  **Second Iteration (E.Id = 2, E.Name = Henry, E.Salary = 80000, E.ManagerId = 4):**
-    *   `E.managerId is not null` evaluates to `4 is not null`, which is TRUE.
-    *   Subquery: `Select Salary from Employee E2 where E2.id = E.managerID` becomes `Select Salary from Employee E2 where E2.id = 4`.
-    *   The subquery returns `90000` (Max's salary).
-    *   `E.Salary > (Subquery Result)` becomes `80000 > 90000`, which is FALSE.
-    *   Since the salary condition is FALSE, 'Henry' is not selected.
+3.  **Evaluation for Joe (id=1):**
 
-3.  **Third Iteration (E.Id = 3, E.Name = Sam, E.Salary = 60000, E.ManagerId = NULL):**
-    *   `E.managerId is not null` evaluates to `NULL is not null`, which is FALSE.
-    *   Since the first condition is FALSE, this row is skipped.
+    *   Outer query:  `E.name = 'Joe'`, `E.salary = 70000`, `E.managerId = 3`
+    *   `E.managerId is not null` is true.
+    *   Subquery:  `Select Salary from Employee E2 where E2.id = 3` returns `60000` (Sam's salary).
+    *   `70000 > 60000` is true.
+    *   Therefore, 'Joe' is included in the result.
 
-4.  **Fourth Iteration (E.Id = 4, E.Name = Max, E.Salary = 90000, E.ManagerId = NULL):**
-    *   `E.managerId is not null` evaluates to `NULL is not null`, which is FALSE.
-    *   Since the first condition is FALSE, this row is skipped.
+4.  **Evaluation for Henry (id=2):**
 
-Therefore, the final result will only contain 'Joe'.
+    *   Outer query:  `E.name = 'Henry'`, `E.salary = 80000`, `E.managerId = 4`
+    *   `E.managerId is not null` is true.
+    *   Subquery:  `Select Salary from Employee E2 where E2.id = 4` returns `90000` (Max's salary).
+    *   `80000 > 90000` is false.
+    *   Therefore, Henry is NOT included in the result.
 
----
+5.  **Result:**
+
+    The query returns a table containing only the name 'Joe'.
+
+*EXAMPLE WITH THE CORRECT OUTPUT**
+
+1.  **Evaluation for Henry (id=2):**
+
+    *   Outer query:  `E.name = 'Henry'`, `E.salary = 80000`, `E.managerId = 4`
+    *   `E.managerId is not null` is true.
+    *   Subquery:  `Select Salary from Employee E2 where E2.id = 4` returns `90000` (Max's salary).
+    *   `80000 > 90000` is false.
+    *   Therefore, Henry is NOT included in the result.
 
 ## 🚀 **Time & Space Complexity**
 
-*   **Time Complexity:** **O(n<sup>2</sup>)** -  The subquery is executed for each row, resulting in a nested loop behavior in the worst case.
-
-*   **Space Complexity:** **O(1)** - The query uses a constant amount of extra space.
+*   **Time Complexity:** **O(N^2)** in the worst-case scenario where 'N' is the number of employees. This is because for each employee, the subquery potentially iterates through the entire Employee table to find the manager's salary.  In the average case, it could be closer to O(N*M) where M is the number of managers if there is indexing. Using a JOIN could potentially be more efficient if the database optimizer can leverage indexes.
+*   **Space Complexity:** **O(1)**, the space complexity is constant because we are not using any extra space that scales with the input size.  The subquery's space usage is limited to holding a single salary value.
     
