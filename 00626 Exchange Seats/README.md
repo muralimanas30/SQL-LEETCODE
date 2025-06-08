@@ -1,44 +1,57 @@
 # 00626 - Exchange Seats
     
 **Language:** Mysql  
-**Runtime:** 337 ms (Beats 81.74% of users)  
+**Runtime:** 337 ms (Beats 82.75% of users)  
 **Memory:** 0B (Beats 100.00% of users)  
+
+## 📝 **LeetCode Problem**
+| 🔢 Problem Number | 📌 Title | 🔗 Link |
+|------------------|--------------------------|--------------------------|
+| 626 | Exchange Seats | [LeetCode Problem](https://leetcode.com/problems/exchange-seats/) |
+
+---
 
 ## 💡 **Problem Explanation**
 
-The "Exchange Seats" problem requires you to swap the seats of adjacent students in a table. If the number of students is odd, the last student's seat remains unchanged.
+The problem requires you to swap the seat positions of students in a classroom. If the number of students is odd, the last student should remain in their original seat. The input is a table named `Seat` with columns `id` and `student`. The output should be the same table but with the student names swapped according to the rules.
 
 **Example:**
 
 **Input:**
 
-`Seat` table:
-
+```
++----+---------+
 | id | student |
-|----|---------|
-| 1  | Abbot  |
-| 2  | Doris  |
++----+---------+
+| 1  | Abbot   |
+| 2  | Doris   |
 | 3  | Emerson |
-| 4  | Green  |
-| 5  | Jeames |
+| 4  | Green   |
+| 5  | Jeames  |
++----+---------+
+```
 
 **Output:**
 
+```
++----+---------+
 | id | student |
-|----|---------|
-| 1  | Doris  |
-| 2  | Abbot  |
-| 3  | Green  |
++----+---------+
+| 1  | Doris   |
+| 2  | Abbot   |
+| 3  | Green   |
 | 4  | Emerson |
-| 5  | Jeames |
+| 5  | Jeames  |
++----+---------+
+```
 
 ## 📊 **Algorithm**
 
-*   The algorithm uses `CASE` statement along with window functions `LEAD` and `LAG` to swap the seats.
-*   `LEAD(student) OVER (ORDER BY ID)` gets the next student's name.
-*   `LAG(student) OVER (ORDER BY ID)` gets the previous student's name.
-*   If the ID is odd, it checks if there's a next student using `COALESCE`. If there is, it swaps with the next student; otherwise, the student remains in their original seat.
-*   If the ID is even, it swaps with the previous student.
+*   The algorithm involves using window functions to look at the next and previous student names based on their IDs.
+*   We use `CASE` statement to determine whether to swap a student's name with the next or previous one.
+*   If the ID is odd, we swap with the next student using `LEAD()`. If there is no next student (i.e., the last student and the number of students is odd), we keep the student's name as is using `COALESCE()`.
+*   If the ID is even, we swap with the previous student using `LAG()`.
+*   The results are ordered by ID.
 
 ## 🔥 **Code Implementation**
 
@@ -57,8 +70,6 @@ FROM SEAT;
 ## 📊 **ASCII Representation**
 
 ```
-Seat Table:
-
 +-------------+---------+
 | Column Name | Type    |
 +-------------+---------+
@@ -66,64 +77,67 @@ Seat Table:
 | student     | varchar |
 +-------------+---------+
 id is the primary key for this table.
-Each row of this table indicates the name and the id of a student.
-id is a continuous increment.
+Each row of this table contains the id and the name of a student.
+The id of each student is a contiguous integer starting from 1.
 ```
 
 ## 📊 **WORKING**
 
-Let's walk through a sample execution with the given input:
+Let's trace the execution with the provided example:
 
-**Input Seat Table:**
+**Input Table:**
 
+```
++----+---------+
 | id | student |
-|----|---------|
-| 1  | Abbot  |
-| 2  | Doris  |
++----+---------+
+| 1  | Abbot   |
+| 2  | Doris   |
 | 3  | Emerson |
-| 4  | Green  |
-| 5  | Jeames |
+| 4  | Green   |
+| 5  | Jeames  |
++----+---------+
+```
 
 1.  **ID = 1 (Odd):**
-
-    *   `LEAD(student) OVER (ORDER BY ID)` returns "Doris".
-    *   `COALESCE(Doris, Abbot)` returns "Doris".
-    *   So, the student becomes "Doris".
+    *   `LEAD(student) OVER (ORDER BY ID)` gives 'Doris'.
+    *   Since `LEAD()` is not NULL, `COALESCE()` returns 'Doris'.
+    *   Result: `ID = 1, student = 'Doris'`
 
 2.  **ID = 2 (Even):**
-
-    *   `LAG(student) OVER (ORDER BY ID)` returns "Abbot".
-    *   So, the student becomes "Abbot".
+    *   `LAG(student) OVER (ORDER BY ID)` gives 'Abbot'.
+    *   Result: `ID = 2, student = 'Abbot'`
 
 3.  **ID = 3 (Odd):**
-
-    *   `LEAD(student) OVER (ORDER BY ID)` returns "Green".
-    *   `COALESCE(Green, Emerson)` returns "Green".
-    *   So, the student becomes "Green".
+    *   `LEAD(student) OVER (ORDER BY ID)` gives 'Green'.
+    *   Since `LEAD()` is not NULL, `COALESCE()` returns 'Green'.
+    *   Result: `ID = 3, student = 'Green'`
 
 4.  **ID = 4 (Even):**
-
-    *   `LAG(student) OVER (ORDER BY ID)` returns "Emerson".
-    *   So, the student becomes "Emerson".
+    *   `LAG(student) OVER (ORDER BY ID)` gives 'Emerson'.
+    *   Result: `ID = 4, student = 'Emerson'`
 
 5.  **ID = 5 (Odd):**
+    *   `LEAD(student) OVER (ORDER BY ID)` gives NULL (because there is no next row).
+    *   `COALESCE(NULL, student)` returns 'Jeames'.
+    *   Result: `ID = 5, student = 'Jeames'`
 
-    *   `LEAD(student) OVER (ORDER BY ID)` returns NULL (because it's the last row).
-    *   `COALESCE(NULL, Jeames)` returns "Jeames".
-    *   So, the student remains "Jeames".
+**Final Result:**
 
-**Result Table:**
-
+```
++----+---------+
 | id | student |
-|----|---------|
-| 1  | Doris  |
-| 2  | Abbot  |
-| 3  | Green  |
++----+---------+
+| 1  | Doris   |
+| 2  | Abbot   |
+| 3  | Green   |
 | 4  | Emerson |
-| 5  | Jeames |
+| 5  | Jeames  |
++----+---------+
+```
 
 ## 🚀 **Time & Space Complexity**
 
-*   **Time Complexity:** **O(N)**, where N is the number of rows in the `Seat` table, because the window functions iterate through the table once.
-*   **Space Complexity:** **O(1)**, as the query uses a constant amount of extra space, regardless of the input size.
+*   **Time Complexity:** **O(N)** - where N is the number of rows in the `Seat` table. The `LEAD()` and `LAG()` window functions iterate through each row once.
+*   **Space Complexity:** **O(N)** -  The window functions (`LEAD()` and `LAG()`) might require storing intermediate results proportional to the input size.
     
