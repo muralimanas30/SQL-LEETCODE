@@ -13,9 +13,9 @@
 
 ## 💡 **Problem Explanation**
 
-The "Market Analysis I" problem requires us to analyze user purchasing behavior in the year 2019. Given two tables, `Users` and `Orders`, our task is to determine the number of orders each user placed in 2019.  For each user, we need to output their user ID (as `buyer_id`), their join date, and the total number of orders they made in 2019. If a user didn't place any orders in 2019, the corresponding order count should be 0.
+The task is to analyze user and order data to determine the number of orders placed by each user in the year 2019. We need to output a table containing each user's ID, their join date, and the number of orders they placed in 2019.  If a user didn't place any orders in 2019, the number of orders should be 0.
 
-**Example:**
+**Sample Input:**
 
 **Users Table:**
 
@@ -23,38 +23,38 @@ The "Market Analysis I" problem requires us to analyze user purchasing behavior 
 |---------|------------|
 | 1       | 2018-01-01 |
 | 2       | 2019-01-05 |
-| 3       | 2019-02-01 |
+| 3       | 2019-12-01 |
+| 4       | 2018-07-22 |
 
 **Orders Table:**
 
-| order_id | buyer_id | order_date |
-|----------|----------|------------|
-| 1        | 1        | 2019-01-01 |
-| 2        | 2        | 2019-01-05 |
-| 3        | 3        | 2019-02-01 |
-| 4        | 1        | 2019-03-01 |
-| 5        | 2        | 2018-01-01 |
-| 6        | 3        | 2020-01-01 |
+| order_id | order_date | buyer_id | seller_id |
+|----------|------------|----------|-----------|
+| 1        | 2019-08-01 | 1        | 2          |
+| 2        | 2018-08-02 | 1        | 3          |
+| 3        | 2019-08-03 | 2        | 3          |
+| 4        | 2019-08-04 | 3        | 2          |
+| 5        | 2019-08-05 | 1        | 4          |
 
 **Expected Output:**
 
 | buyer_id | join_date  | orders_in_2019 |
 |----------|------------|----------------|
-| 1        | 2018-01-01 | 2              |
+| 1        | 2018-01-01 | 3              |
 | 2        | 2019-01-05 | 1              |
-| 3        | 2019-02-01 | 1              |
+| 3        | 2019-12-01 | 1              |
+| 4        | 2018-07-22 | 0              |
 
 ---
 
 ## 📊 **Algorithm**
 
-*   Start with the `Users` table, aliased as `U`.
-*   Perform a left join with the `Orders` table, aliased as `O`, on the condition `U.USER_ID = O.BUYER_ID`. This ensures that all users are included in the result, even if they have no orders.
-*   Filter the orders to include only those placed in 2019 by adding the condition `O.ORDER_DATE BETWEEN '2019-01-01' AND '2019-12-31'`.
-*   Group the results by `U.USER_ID` to count the number of orders for each user.
-*   Select the user's `USER_ID` as `BUYER_ID`, `JOIN_DATE`, and count the number of orders as `ORDERS_IN_2019`.
-
----
+*   Start with the `Users` table as the base for our result.
+*   Left join `Orders` table with `Users` table on `user_id = buyer_id` to get all users and their corresponding orders.
+*   Filter the orders to only include those placed in 2019 using the `ORDER_DATE` column.
+*   Group the results by `user_id` to count the number of orders for each user.
+*   Use `COUNT(O.ORDER_ID)` to count the number of orders for each user (this will handle cases where users have no orders in 2019 by returning 0 due to the left join).
+*   Select `U.USER_ID` as `BUYER_ID`, `U.JOIN_DATE`, and the count of orders as `ORDERS_IN_2019`.
 
 ## 🔥 **Code Implementation**
 
@@ -70,104 +70,74 @@ LEFT JOIN ORDERS O
 GROUP BY U.USER_ID
 ```
 
----
-
 ## 📊 **ASCII Representation**
 
-Here's a simple ASCII representation of the database schema:
-
 ```
-Users Table
-+---------+-----------+
-| user_id | join_date |
-+---------+-----------+
-| INT     | DATE      |
-+---------+-----------+
+Users Table:
 
-Orders Table
-+----------+----------+------------+
-| order_id | buyer_id | order_date |
-+----------+----------+------------+
-| INT      | INT      | DATE       |
-+----------+----------+------------+
++---------+------------+
+| user_id | join_date  |
++---------+------------+
+| 1       | 2018-01-01 |
+| 2       | 2019-01-05 |
+| 3       | 2019-12-01 |
+| 4       | 2018-07-22 |
++---------+------------+
 
-Relationship:
-Users.user_id  <-----> Orders.buyer_id
+Orders Table:
+
++----------+------------+----------+-----------+
+| order_id | order_date | buyer_id | seller_id |
++----------+------------+----------+-----------+
+| 1        | 2019-08-01 | 1        | 2         |
+| 2        | 2018-08-02 | 1        | 3         |
+| 3        | 2019-08-03 | 2        | 3         |
+| 4        | 2019-08-04 | 3        | 2         |
+| 5        | 2019-08-05 | 1        | 4         |
++----------+------------+----------+-----------+
 ```
-
----
 
 ## 📊 **WORKING**
 
-Let's walk through the query with the provided sample data:
+Let's walk through the execution of the SQL query using the sample input:
 
-1.  **Initial Tables:**
+1.  **JOIN Operation:**
 
-    **Users Table (U):**
+    We perform a `LEFT JOIN` between the `Users` and `Orders` tables on `U.USER_ID = O.BUYER_ID`. Also, filter `Orders` table with the condition `O.ORDER_DATE BETWEEN '2019-01-01' AND '2019-12-31'`.
 
-    ```
-    +---------+------------+
-    | user_id | join_date  |
-    +---------+------------+
-    | 1       | 2018-01-01 |
-    | 2       | 2019-01-05 |
-    | 3       | 2019-02-01 |
-    +---------+------------+
-    ```
+    | user\_id | join\_date  | order\_id | order\_date | buyer\_id | seller\_id |
+    | :-------- | :----------- | :--------- | :----------- | :--------- | :---------- |
+    | 1        | 2018-01-01 | 1         | 2019-08-01  | 1         | 2          |
+    | 1        | 2018-01-01 | 5         | 2019-08-05  | 1         | 4          |
+    | 2        | 2019-01-05 | 3         | 2019-08-03  | 2         | 3          |
+    | 3        | 2019-12-01 | 4         | 2019-08-04  | 3         | 2          |
+    | 4        | 2018-07-22 | NULL       | NULL        | NULL       | NULL        |
 
-    **Orders Table (O):**
+2.  **GROUP BY and COUNT:**
 
-    ```
-    +----------+----------+------------+
-    | order_id | buyer_id | order_date |
-    +----------+----------+------------+
-    | 1        | 1        | 2019-01-01 |
-    | 2        | 2        | 2019-01-05 |
-    | 3        | 3        | 2019-02-01 |
-    | 4        | 1        | 2019-03-01 |
-    | 5        | 2        | 2018-01-01 |
-    | 6        | 3        | 2020-01-01 |
-    +----------+----------+------------+
-    ```
+    We group the joined table by `U.USER_ID` and count the number of orders for each user within the specified date range:
 
-2.  **LEFT JOIN and Filtering:**
+    | user\_id | join\_date  | COUNT(O.ORDER\_ID) |
+    | :-------- | :----------- | :----------------- |
+    | 1        | 2018-01-01 | 2                  |
+    | 2        | 2019-01-05 | 1                  |
+    | 3        | 2019-12-01 | 1                  |
+    | 4        | 2018-07-22 | 0                  |
 
-    The `LEFT JOIN` combines `Users` and `Orders` where `U.USER_ID = O.BUYER_ID`, and the `WHERE` clause filters for orders in 2019.  The combined data looks conceptually like this before the `GROUP BY`:
+3.  **Final Result:**
 
-    ```
-    +---------+------------+----------+----------+------------+
-    | user_id | join_date  | order_id | buyer_id | order_date |
-    +---------+------------+----------+----------+------------+
-    | 1       | 2018-01-01 | 1        | 1        | 2019-01-01 |
-    | 1       | 2018-01-01 | 4        | 1        | 2019-03-01 |
-    | 2       | 2019-01-05 | 2        | 2        | 2019-01-05 |
-    | 3       | 2019-02-01 | 3        | 3        | 2019-02-01 |
-    +---------+------------+----------+----------+------------+
-    ```
+    The final output includes `BUYER_ID`, `JOIN_DATE`, and `ORDERS_IN_2019`:
 
-    Note:  Orders 5 and 6 are filtered out because their `order_date` is not in 2019.
-
-3.  **GROUP BY and COUNT:**
-
-    The `GROUP BY U.USER_ID` groups the results by user ID.  The `COUNT(O.ORDER_ID)` counts the number of orders for each user in 2019.
-
-4.  **Final Result:**
-
-    ```
-    +----------+------------+----------------+
-    | BUYER_ID | JOIN_DATE  | ORDERS_IN_2019 |
-    +----------+------------+----------------+
-    | 1        | 2018-01-01 | 2              |
-    | 2        | 2019-01-05 | 1              |
-    | 3        | 2019-02-01 | 1              |
-    +----------+------------+----------------+
-    ```
-
----
+    | BUYER\_ID | JOIN\_DATE  | ORDERS\_IN\_2019 |
+    | :-------- | :----------- | :----------------- |
+    | 1        | 2018-01-01 | 2                  |
+    | 2        | 2019-01-05 | 1                  |
+    | 3        | 2019-12-01 | 1                  |
+    | 4        | 2018-07-22 | 0                  |
 
 ## 🚀 **Time & Space Complexity**
 
-*   **Time Complexity:** The time complexity is primarily determined by the `LEFT JOIN` and the `GROUP BY` operations.  In the worst case, the `LEFT JOIN` could take **O(m*n)** time, where 'm' is the number of rows in the `Users` table and 'n' is the number of rows in the `Orders` table.  The `GROUP BY` operation then takes **O(k log k)** time, where 'k' is the number of distinct user IDs.  Thus, the overall time complexity is approximately **O(m\*n + k log k)**, where **m and n** are the sizes of the `Users` and `Orders` tables, respectively.
+*   **Time Complexity:**  The time complexity is primarily determined by the `JOIN` operation. In the worst case, if every user has a large number of orders, the join could take **O(U \* O)** time, where U is the number of users and O is the number of orders.  However, with proper indexing on `USER_ID` and `BUYER_ID`, the join can be significantly faster. The `GROUP BY` operation adds an additional **O(U)** complexity.
 
-*   **Space Complexity:** The space complexity depends on the size of the intermediate table created during the `LEFT JOIN` and the space required to store the grouped results. In the worst case, the intermediate table could be as large as **O(m\*n)**. The space required for the grouped results is **O(k)**, where 'k' is the number of distinct user IDs. Thus, the overall space complexity is **O(m\*n + k)**.
+*   **Space Complexity:** The space complexity is affected by the size of the joined table. In the worst case, the joined table could require **O(U \* O)** space. However, since we are grouping the data, the final space complexity is more likely to be **O(U)**, where U is the number of users, as we store the count of orders for each user.
     
