@@ -1,46 +1,58 @@
 # 00178 - Rank Scores
     
 **Language:** Mysql  
-**Runtime:** 586 ms (Beats 12.62% of users)  
+**Runtime:** 586 ms (Beats 12.80% of users)  
 **Memory:** 0B (Beats 100.00% of users)  
+
+## 📝 **LeetCode Problem**
+| 🔢 Problem Number | 📌 Title | 🔗 Link |
+|------------------|--------------------------|--------------------------|
+| 178 | Rank Scores | [LeetCode Problem](https://leetcode.com/problems/rank-scores/) |
+
+---
 
 ## 💡 **Problem Explanation**
 
-The task is to rank scores from a table of `Scores`. The ranking should adhere to the following rules:
+The problem asks us to rank scores from a table named `Scores`. The ranking should be based on the score values, with higher scores receiving higher ranks. If two or more scores are the same, they should receive the same rank.  The rank numbers should be consecutive; in other words, there should be no gaps in the ranking sequence.
 
-1.  The score with the highest value gets rank 1.
-2.  After a tie, the next rank assigned should be the subsequent number (i.e., no skipping of ranks).
+For example, consider the following `Scores` table:
 
-Let's illustrate with an example:
+```
++----+-------+
+| id | score |
++----+-------+
+| 1  | 3.50  |
+| 2  | 3.65  |
+| 3  | 4.00  |
+| 4  | 3.85  |
+| 5  | 4.00  |
+| 6  | 3.65  |
++----+-------+
+```
 
-**Scores Table:**
+The expected output would be:
 
-| id  | score |
-| --- | ----- |
-| 1   | 3.5   |
-| 2   | 4.0   |
-| 3   | 3.65  |
-| 4   | 4.0   |
-| 5   | 3.85  |
-| 6   | 4.0   |
-
-**Expected Output:**
-
+```
++-------+------+
 | score | rank |
-| ----- | ---- |
++-------+------+
 | 4.00  | 1    |
 | 4.00  | 1    |
-| 4.00  | 1    |
-| 3.85  | 4    |
-| 3.65  | 5    |
-| 3.50  | 6    |
+| 3.85  | 2    |
+| 3.65  | 3    |
+| 3.65  | 3    |
+| 3.50  | 4    |
++-------+------+
+```
+
+---
 
 ## 📊 **Algorithm**
 
-*   Join the `Scores` table to itself such that we can compare each score with all other scores.
-*   Count the distinct scores that are greater than the current score to determine the rank.
-*   Use `GROUP BY` to group the result by `id` so that ranking applies to each individual score entry.
-*   Order the result by score in descending order.
+*   Select the score from the `Scores` table.
+*   Calculate the rank for each score. The rank is determined by counting the number of distinct scores that are higher than the current score and adding 1.
+*   Group the results by score ID.
+*   Order the results in descending order of score.
 
 ## 🔥 **Code Implementation**
 
@@ -54,9 +66,50 @@ GROUP  BY S1.ID
 ORDER BY S1.SCORE DESC
 ```
 
+## 📊 **ASCII Representation**
+
+Here's a simplified representation of the `Scores` table structure:
+
+```
+Scores Table
++-------------+---------+
+| Column Name |  Type   |
++-------------+---------+
+| id          | INTEGER |
+| score       | DECIMAL |
++-------------+---------+
+```
+
+## 📊 **WORKING**
+
+Let's trace the execution with the following `Scores` table:
+
+```
++----+-------+
+| id | score |
++----+-------+
+| 1  | 3.50  |
+| 2  | 3.65  |
+| 3  | 4.00  |
+| 4  | 3.85  |
+| 5  | 4.00  |
+| 6  | 3.65  |
++----+-------+
+```
+
+1.  **JOIN and Rank Calculation**: For each score in `S1`, the query counts distinct scores in `S2` that are higher.
+
+    *   For `S1.score = 3.50`, there are 4 distinct scores in `S2` greater than 3.50 (3.65, 3.85, 4.00).  The rank becomes 4 + 1 = 5.
+    *   For `S1.score = 3.65`, there are 2 distinct scores in `S2` greater than 3.65 (3.85, 4.00). The rank becomes 2 + 1 = 3.
+    *   For `S1.score = 4.00`, there are 0 distinct scores in `S2` greater than 4.00. The rank becomes 0 + 1 = 1.
+    *   For `S1.score = 3.85`, there is 1 distinct score in `S2` greater than 3.85 (4.00). The rank becomes 1 + 1 = 2.
+
+2.  **GROUP BY**: The `GROUP BY S1.ID` clause is essential because without it each row will not have its rank calculated appropriately. Because each ID is distinct, effectively you are calculating the rank for each unique ID.
+
+3.  **ORDER BY**: Finally, results are ordered by `S1.SCORE DESC`, resulting in the ranked output as shown earlier.
+
 ## 🚀 **Time & Space Complexity**
 
-The **time complexity** is primarily determined by the `LEFT JOIN` operation and the `GROUP BY` clause. In the worst case scenario, the `LEFT JOIN` could result in a cartesian product before filtering based on the `ON` condition. However, due to the `GROUP BY` clause, the final time complexity becomes **O(N log N)**, where N is the number of rows in the `Scores` table. This is because grouping and ordering typically take O(N log N) time.
-
-The **space complexity** is mainly influenced by the temporary table created by the `JOIN` operation and the `GROUP BY` clause. In the worst case, the space complexity would be **O(N)** as it needs to store distinct scores for ranking purposes.
+*   **Time Complexity**: The time complexity is primarily determined by the join operation between the `Scores` table and itself, as well as the aggregation. Therefore, the time complexity is **O(N^2)**, where N is the number of rows in the `Scores` table because we compare each score with every other score to determine its rank. The distinct count also contribute to the time complexity.
+*   **Space Complexity**: The space complexity is **O(N)** because we are storing the intermediate results of the join and aggregation, where N is the number of rows in the `Scores` table. Specifically, the rank for each row is stored.
     
