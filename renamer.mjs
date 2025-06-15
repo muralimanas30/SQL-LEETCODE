@@ -4,8 +4,6 @@ import readline from 'readline';
 import fetch from 'node-fetch';
 // ...existing code...
 
-const GEMINI_API_KEY = 'AIzaSyCQbCxNib-jCfySoK6dQS1NIjxpiNAUPTE';
-
 async function getLeetCodeInfo(title) {
     const prompt = `Given the LeetCode problem title or partial title: '${title}', return the correct problem number and full title in the format: '00001 Two Sum'. Only output the formatted string.`;
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + GEMINI_API_KEY;
